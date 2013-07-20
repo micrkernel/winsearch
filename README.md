@@ -4,12 +4,14 @@ winsearch
 A python library for accessing the windows search database and executing search queries.
 This allows a much faster search of files on the system.
 
+
 Requirements
 ============
 
 - [adodbapi](https://pypi.python.org/pypi/adodbapi): use `easy_install adodbapi` to install
 - Python 2.4 or higher
 - Windows Vista or higher
+
 
 What is Windows Search?
 =======================
@@ -21,22 +23,22 @@ For futher information see [Windows Search](http://en.wikipedia.org/wiki/Windows
 Examples
 ========
 
-Find the last five documents, which were edited
------------------------------------------------
+Find the five most recently edited documents
+--------------------------------------------
 
 	import winsearch
 	query = winsearch.Query(select=["path"])
 	query.limit(5)
 	query.extensions("pdf", "doc", "docx", "odt")
-	query.sortby("date").asc()
+	query.sortby("date").desc()
 
 	cursor = query.execute()
 	print "Last five docs:"
 	for row in cursor:
 		print "\t", row[0]
 
-Get size of all indexed jpegs
-------------------------------
+Get total memory usage of all indexed jpegs
+-------------------------------------------
 
 	import winsearch
 	query = winsearch.Query(select=["size"])
@@ -47,6 +49,7 @@ Get size of all indexed jpegs
 
 	total_size = sum(map(lambda r: r[0], results))
 	print "Size of all indexed jpegs: %d MBytes" % (total_size // 0x100000)
+
 
 License
 ========
