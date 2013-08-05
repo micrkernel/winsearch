@@ -5,7 +5,7 @@ import urllib2
 
 
 __author__ = "microkernel"
-__version__ = "0.0.1a"
+__version__ = "0.0.1dev"
 
 
 CONN_STRING = 'Provider=Search.CollatorDSO;' \
@@ -35,13 +35,13 @@ SYSTEMINDEX_COLS = {
 class Query():
     def __init__(self, select=[], **kwargs):
         self.select(*select or ["System.ItemUrl"])
-        self.limit(kwargs.get("limit", 0))
+        self.limit(kwargs.get("limit", 0))  # if 0: no limit
         self.scope(kwargs.get("scope", ""))
         self.extensions(*kwargs.get("extensions", []))
         self.fpattern(kwargs.get("filepattern", ""))
         self.sortby(kwargs.get("sort", None))
 
-        sort_order = kwargs.get("orderby", "asc").lower()
+        sort_order = kwargs.get("order", "asc").lower()
         if sort_order in ["asc", "desc"]:
             getattr(self, sort_order)()
         else:
@@ -98,7 +98,9 @@ class Query():
         cols = list(cols)
         for index, col in enumerate(cols):
             cols[index] = SYSTEMINDEX_COLS.get(col, col)
-        self._select = cols
+        self._select = set(getattr(self, "_select", []))
+        self._select = self._select.union(set(cols))
+        self._select = list(self._select)
 
     def scope(self, path):
         # to add: test path if valid
@@ -163,17 +165,20 @@ def is_windows_search_avaible(scope):
 
 
 def test():
+    import time
+    start = time.time()
 
+    # five most recently edited documents
     query = Query(select=["path"])
-    query.limit(5)
+    query.limit(5).sortby("date").desc()
     query.extensions("pdf", "doc", "docx", "odt")
-    query.sortby("date").desc()
 
     cursor = query.execute()
-    print "Last five docs:"
+    print "[*] Last five docs:"
     for row in cursor:
         print "\t", row[0]
 
+    # memory usage of all indexed jpegs
     query = Query(select=["size"])
     query.extensions("jpg", "jpeg")
 
@@ -181,7 +186,21 @@ def test():
     results = cursor.fetchall()
 
     total_size = sum(map(lambda r: r[0], results))
-    print "Size of all indexed jpegs: %d MBytes" % (total_size // 0x100000)
+    print "[*] Total memory usage of all indexed jpegs: %d MBytes" % (
+        total_size // 0x100000)
+
+    # five most recently edited .py's
+    query = Query(select=["url"])
+    query.limit(5).sortby("date").desc()
+    query.extensions("py")
+
+    cursor = query.execute()
+    print "[*] Last five pys:"
+    for row in cursor:
+        print "\t", itemurl2pathname(row[0])
+
+    delta = time.time() - start
+    print "[Finished in %.1fs]" % delta
 
 
 if __name__ == "__main__":

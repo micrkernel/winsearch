@@ -2,7 +2,12 @@ winsearch
 ======
 
 A python library for accessing the windows search database and executing search queries.
-This allows a much faster search of files on the system.
+This allows a much faster file search on a windows system, than a linear search.
+
+Installation
+============
+
+Just run `setup.py install`.
 
 
 Requirements
